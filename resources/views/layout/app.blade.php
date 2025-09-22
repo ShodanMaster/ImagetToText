@@ -12,6 +12,7 @@
     <div class="container mt-5">
         @yield('content')
     </div>
+    <script src="{{ asset('asset/sweetalert2.min.js')}}"></script>
     <script src="{{ asset('asset/axios.min.js')}}"></script>
     <script src="{{ asset('asset//cropper.min.js') }}"></script>
     <script src="{{ asset('asset/bootstrap.bundle.min.js') }}"></script>

@@ -2,11 +2,11 @@
 @section('content')
 
 <!-- Modal -->
-<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="exampleModalLabel">Add Image</h1>
+                <h1 class="modal-title fs-5" id="addModalLabel">Add Image</h1>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
@@ -43,8 +43,8 @@
         <h2>Image to Text</h2>
 
         <!-- Button trigger modal -->
-        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-        Launch demo modal
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal">
+            Add
         </button>
     </div>
 @endsection
@@ -71,7 +71,11 @@
       stream = await navigator.mediaDevices.getUserMedia({ video: true });
       webcam.srcObject = stream;
     } catch (error) {
-      alert('Unable to access the camera');
+      Swal.fire({
+        icon: 'error',
+        title: 'Camera Error',
+        text: 'Unable to access the camera.',
+      });
       console.error(error);
     }
   });
@@ -128,7 +132,11 @@
   // ⬆️ Upload cropped image
   uploadImageBtn.addEventListener('click', function () {
     if (!cropper) {
-      alert("Please select or capture and crop an image first.");
+      Swal.fire({
+        icon: 'warning',
+        title: 'No Image',
+        text: 'Please select or capture and crop an image first.',
+      });
       return;
     }
 
@@ -136,28 +144,56 @@
       const formData = new FormData();
       formData.append('image', blob, 'cropped.jpg');
 
-      axios.post('/upload-image-endpoint', formData, {
+      axios.post('{{ route('image-to-text.store') }}', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
       })
       .then(response => {
         console.log('Upload successful', response.data);
-        alert('Image uploaded successfully!');
+        Swal.fire({
+          icon: 'success',
+          title: 'Success',
+          text: 'Image uploaded successfully!',
+        });
         document.getElementById('imageForm').reset();
         previewContainer.style.display = 'none';
         if (cropper) cropper.destroy();
         cropper = null;
-        const modal = bootstrap.Modal.getInstance(document.getElementById('exampleModal'));
+        const modal = bootstrap.Modal.getInstance(document.getElementById('addModal'));
         modal.hide();
       })
       .catch(error => {
         console.error('Upload failed', error);
-        alert('Upload failed.');
+        Swal.fire({
+          icon: 'error',
+          title: 'Upload Failed',
+          text: 'Something went wrong while uploading the image.',
+        });
       });
     });
   });
+
+  // 🔄 Reset modal content when it's closed
+  document.getElementById('addModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('imageForm').reset();
+    previewContainer.style.display = 'none';
+    webcamContainer.style.display = 'none';
+
+    if (cropper) {
+      cropper.destroy();
+      cropper = null;
+    }
+
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+      stream = null;
+    }
+
+    previewImage.src = '';
+  });
 </script>
+
 
 @endpush
 
