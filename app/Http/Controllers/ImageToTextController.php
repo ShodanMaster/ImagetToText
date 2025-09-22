@@ -18,14 +18,19 @@ class ImageToTextController extends Controller
         $fullPath = storage_path('app/public/' . $path);
 
         try {
-            $text = (new TesseractOCR($fullPath))
-                ->lang('eng') // optional, defaults to eng
-                ->run();
+            $ocr = new TesseractOCR($fullPath);
+            $ocr->lang('eng');
+            $ocr->executable('C:\Program Files\Tesseract-OCR\tesseract.exe');
+            $text = $ocr->run();
 
-            $imageText = new ImageText();
-            $imageText->image_text = $text;
-            $imageText->image_path = $path;
-            $imageText->save();
+            if (trim($text) === '') {
+                throw new \Exception('No text was extracted from the image.');
+            }
+
+            ImageText::create([
+                'image_text' => $text,
+                'image_path' => $path,
+            ]);
 
             return response()->json([
                 'success' => true,
